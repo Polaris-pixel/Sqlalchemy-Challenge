@@ -15,7 +15,7 @@ from sqlalchemy.pool import StaticPool
 #################################################
 # Database Setup
 #################################################
-engine = create_engine("sqlite:///Resources/hawaii.sqlite")
+engine = create_engine("sqlite:///Resources/hawaii.sqlite", connect_args={"check_same_thread": False}, poolclass=StaticPool, echo=True)
 
 # Reflect Existing Database Into a New Model
 Base = automap_base()
@@ -37,19 +37,16 @@ app = Flask(__name__)
 #################################################
 # Flask Routes
 #################################################
-
 # Home Route
 @app.route("/")
 def welcome():
         return (
-            f"Available Routes:<br/>"       
-            f"/api/v1.0/precipitation<br/>"
-            f"/api/v1.0/stations<br/>"
-            f"/api/v1.0/tobs<br/>"
-            f"/api/v1.0/2017-03-14<br/>"
-            f"/api/v1.0/2017-03-14/2017-03-28<br/>"
-        ) 
-    
+        f"Available Routes:<br/>"    
+        f'/api/v1.0/precipitation<br/>'
+        f'/api/v1.0/stations<br/>'
+        f'/api/v1.0/2017-03-14<br/>'
+        f'/api/v1.0/2017-03-14/2017-03-28'
+    )
 # Precipitation Route
 @app.route("/api/v1.0/precipitation")
 def precipitation():
@@ -73,8 +70,10 @@ def precipitation():
 def stations():
         # Return a JSON List of Stations From the Dataset
         stations_all = session.query(Station.station, Station.name).all()
+
         # Convert List of Tuples Into Normal List
         station_list = list(stations_all)
+
         # Return JSON List of Stations from the Dataset
         return jsonify(station_list)
 
@@ -82,11 +81,11 @@ def stations():
 @app.route("/api/v1.0/tobs")
 def tobs():
         # Query for the Dates and Temperature Observations from a Year from the Last Data Point
-        year_ago = dt.date(2017,8,23) - dt.timedelta(days=365)
+        one_year_ago = dt.date(2017,8,23) - dt.timedelta(days=365)
 
         # Design a Query to Retrieve the Last 12 Months of Precipitation Data Selecting Only the `date` and `prcp` Values
         tobs_data = session.query(Measurement.date, Measurement.tobs).\
-                filter(Measurement.date >= year_ago).\
+                filter(Measurement.date >= one_year_ago).\
                 order_by(Measurement.date).all()
 
         # Convert List of Tuples Into Normal List
@@ -118,7 +117,7 @@ def start_end_day(start, end):
 
         # Convert List of Tuples Into Normal List
         start_end_day_list = list(start_end_day)
-        
+
         # Return JSON List of Min Temp, Avg Temp and Max Temp for a Given Start-End Range
         return jsonify(start_end_day_list)
 
